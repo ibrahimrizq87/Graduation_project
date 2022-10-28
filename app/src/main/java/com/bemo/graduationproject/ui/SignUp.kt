@@ -5,11 +5,12 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.ImageView
-import android.widget.Toast
+import android.view.View
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContract
 import com.bemo.graduationproject.Classes.User
 import com.bemo.graduationproject.FirebaseStorageManager
+import com.bemo.graduationproject.R
 import com.bemo.graduationproject.databinding.ActivitySignUpBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -33,6 +34,7 @@ https://www.youtube.com/watch?v=ATj6tq5HQZU
   */
     private lateinit var auth: FirebaseAuth
     private lateinit var database: DatabaseReference
+    private lateinit var grade: String
 
     private lateinit var binding: ActivitySignUpBinding
     private lateinit var userImageUri: Uri
@@ -45,14 +47,24 @@ companion object{
         super.onCreate(savedInstanceState)
         binding = ActivitySignUpBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+grade=""
         auth = Firebase.auth
 
         database = Firebase.database.reference
 
         imageView = binding.signUserImage
 
+        val gradeList = resources.getStringArray(R.array.grades)
+        val adapter: ArrayAdapter<CharSequence> = ArrayAdapter.createFromResource(this,R.array.grades,R.layout.spinner_item)
+        val autoCom = findViewById<Spinner>(R.id.grade_spinner)
+        autoCom.setAdapter(adapter)
 
+        autoCom.onItemSelectedListener= object : AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(p0 : AdapterView<*>?, p1: View?, p2:Int, p3: Long) {
+                grade =gradeList[p2]
+                binding.t.text=grade}
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+        }
         binding.imageClick.setOnClickListener {
             pickImageFromGallery()
         }
@@ -63,7 +75,7 @@ binding.signUpBt.setOnClickListener {
     val code = binding.signCode.text.toString()
     val fullName = binding.signName.text.toString()
     if (userImageUri == null){
-        if (email.isNotEmpty()&&password.isNotEmpty() &&code.isNotEmpty()&&fullName.isNotEmpty()){
+        if (email.isNotEmpty()&&password.isNotEmpty() &&code.isNotEmpty()&&fullName.isNotEmpty()&&grade.isNotEmpty()){
             if (password.length == 14 || true ){  // just for testing after tht remove true
               auth.createUserWithEmailAndPassword(email, password)
                   .addOnCompleteListener(this) { task ->
@@ -73,7 +85,8 @@ binding.signUpBt.setOnClickListener {
 
                     if (userId !=null){
                         FirebaseStorageManager().uploadImage(this,userImageUri, userId)
-                        addUserData(userId,fullName,code.toInt(),password.toInt(),"")
+                        addUserData(userId,fullName,code.toInt(),password.toInt(),grade)
+                        startActivity(Intent(this,HomeScreen::class.java))
 
                     }
 
@@ -91,7 +104,7 @@ binding.signUpBt.setOnClickListener {
 
     }
     }else{
-        Toast.makeText(this,"make sure to ch",Toast.LENGTH_SHORT).show()
+        Toast.makeText(this,"make sure to choose pic",Toast.LENGTH_SHORT).show()
 
     }
 }
